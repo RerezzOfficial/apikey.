@@ -1,0 +1,36 @@
+{
+  "name": "IM REREZZ",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.8",
+    "cheerio": "*",
+    "form-data": "^4.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0",
+    "jimp": "^0.22.10",
+    "qrcode": "^1.5.4",
+    "qrcode-with-logos": "^1.0.3",
+    "request": "^2.88.2",
+    "tiktokdl": "^0.0.5",
+    "yt-search": "latest",
+    "multer": "latest",
+    "puppeteer": "latest",
+    "sharp": "latest",
+    "canvas": "latest",
+    "body-parser": "latest",
+    "cheerio": "latest",
+    "mime-types": "latest",
+    "undici": "latest",
+    "ytdl-core": "latest",
+    "fs": "latest"
+  }
+}
