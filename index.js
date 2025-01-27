@@ -1,10 +1,8 @@
 const express = require('express');
-const crypto = require('crypto');
+const axios = require('axios');
 const fs = require('fs');
 const app = express();
 const port = 3000;
-
-app.use(express.json());
 
 // File untuk menyimpan API key dan IP yang terdaftar
 const apiKeysFile = './apikeys.json';
@@ -18,52 +16,64 @@ function readApiKeys() {
     return JSON.parse(data);
 }
 
-// Fungsi untuk menulis data ke file JSON
-function writeApiKeys(data) {
-    fs.writeFileSync(apiKeysFile, JSON.stringify(data, null, 2));
-}
-
-// Middleware untuk validasi API key dan IP
+// Middleware untuk validasi API key dan IP menggunakan query parameter
 function validateApiKey(req, res, next) {
-    const apiKey = req.headers['apikey'];
+    const { apikey } = req.query;  // Mengambil apikey dari query parameter
     const ipAddress = req.ip;
+
+    if (!apikey) {
+        return res.status(400).json({
+            status: false,
+            creator: "IM Rerezz",
+            error: "Parameter 'apikey' wajib disertakan dalam query URL."
+        });
+    }
 
     const validApiKeys = readApiKeys();
 
-    const validEntry = validApiKeys.find(entry => entry.apikey === apiKey && entry.ip === ipAddress);
+    // Mencari apakah ada entri yang cocok dengan apiKey dan ip
+    const validEntry = validApiKeys.find(entry => entry.apikey === apikey && entry.ip === ipAddress);
     if (!validEntry) {
-        return res.status(403).send('API Key atau IP tidak valid.');
+        if (!validApiKeys.find(entry => entry.apikey === apikey)) {
+            return res.status(403).json({
+                status: false,
+                creator: "IM Rerezz",
+                error: "API Key tidak valid atau tidak terdaftar."
+            });
+        } else {
+            return res.status(403).json({
+                status: false,
+                creator: "IM Rerezz",
+                error: "IP tidak terdaftar untuk API Key ini."
+            });
+        }
     }
 
     next();
 }
 
-// Endpoint untuk API yang memerlukan validasi
-app.get('/data', validateApiKey, (req, res) => {
-    res.json({
-        message: 'Data berhasil diakses!',
-        data: [1, 2, 3, 4, 5],
-    });
-});
-
-// Endpoint untuk meng-generate API Key baru secara manual
-app.post('/generate-apikey', (req, res) => {
-    const { ip } = req.body;
-    if (!ip) {
-        return res.status(400).send('IP harus disertakan.');
+// Endpoint untuk API yang memerlukan validasi API key dan IP
+app.get('/api/akiyama', validateApiKey, async (req, res) => {
+  try {
+    const fileUrl = 'https://raw.githubusercontent.com/RerezzOfficial/My.apis/main/media/akiyama.json';
+    const response = await axios.get(fileUrl);
+    const cosplayData = response.data;
+    if (!cosplayData.results || cosplayData.results.length === 0) {
+      return res.status(400).json({ error: 'Tidak ada gambar dalam cosplay.json.' });
     }
-
-    const newApiKey = crypto.randomBytes(16).toString('hex');
-
-    const validApiKeys = readApiKeys();
-    validApiKeys.push({ apikey: newApiKey, ip: ip });
-
-    writeApiKeys(validApiKeys);
-
-    res.json({
-        message: 'API Key baru berhasil dibuat!',
-        apiKey: newApiKey,
+    const randomIndex = Math.floor(Math.random() * cosplayData.results.length);
+    const randomCosplay = cosplayData.results[randomIndex];
+    const imageUrl = randomCosplay.url;
+    const imageResponse = await axios({
+      method: 'get',
+      url: imageUrl,
+      responseType: 'stream'
     });
+    imageResponse.data.pipe(res);  
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Gagal memproses file cosplay.json' });
+  }
 });
 
 // Menjalankan server
